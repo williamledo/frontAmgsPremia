@@ -1,16 +1,65 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { campaigns, winners } from '@/data/mockData';
+import { winners } from '@/data/mockData';
 import { formatCurrency, formatDate } from '@/utils/numbers';
-import { Trophy, Calendar, Clock, ChevronRight } from 'lucide-react';
+import { Trophy, Calendar, Clock, ChevronRight, Edit } from 'lucide-react';
 import { Button } from '@/app/components/ui/button';
 import { Badge } from '@/app/components/ui/badge';
 import { Card } from '@/app/components/ui/card';
 
+interface Campaign {
+  id: number;
+  titulo: string;
+  descricao: string;
+  imagem: string;
+  dataHoraSorteio: string;
+  valorCota: number;
+}
+
 export const Home: React.FC = () => {
   const navigate = useNavigate();
-  const featuredCampaign = campaigns.find(c => c.isFeatured);
-  const secondaryCampaigns = campaigns.filter(c => !c.isFeatured);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Carregar campanhas do backend
+  useEffect(() => {
+    const loadCampaigns = async () => {
+      try {
+        const res = await fetch('http://localhost:8080/api/campanhas', { 
+          credentials: 'include' 
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setCampaigns(Array.isArray(data) ? data : []);
+        }
+      } catch (err) {
+        console.error('Erro ao carregar campanhas:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadCampaigns();
+  }, []);
+
+  // Verificar se usuário é ADMIN
+  useEffect(() => {
+    const checkAdmin = async () => {
+      try {
+        const res = await fetch('http://localhost:8080/api/me', { credentials: 'include' });
+        if (res.ok) {
+          const data = await res.json();
+          setIsAdmin(data.role === 'ADMIN');
+        }
+      } catch (err) {
+        console.error('Erro ao verificar admin:', err);
+      }
+    };
+    checkAdmin();
+  }, []);
+
+  const featuredCampaign = campaigns[0];
+  const secondaryCampaigns = campaigns.slice(1);
 
   return (
     <div className="min-h-screen bg-zinc-950 text-white">
@@ -36,14 +85,18 @@ export const Home: React.FC = () => {
       </header>
 
       {/* Featured Campaign */}
-      {featuredCampaign && (
+      {isLoading ? (
+        <section className="container mx-auto px-4 py-12">
+          <div className="text-center text-zinc-400">Carregando campanhas...</div>
+        </section>
+      ) : featuredCampaign ? (
         <section className="container mx-auto px-4 py-12">
           <Card className="bg-zinc-900 border-zinc-800 overflow-hidden">
             <div className="grid md:grid-cols-2 gap-8">
               <div className="relative h-64 md:h-full">
                 <img
-                  src={featuredCampaign.imageUrl}
-                  alt={featuredCampaign.title}
+                  src={featuredCampaign.imagem}
+                  alt={featuredCampaign.titulo}
                   className="w-full h-full object-cover"
                 />
               </div>
@@ -56,21 +109,21 @@ export const Home: React.FC = () => {
                     Sorteio ao vivo
                   </Badge>
                 </div>
-                <h2 className="text-4xl md:text-5xl font-bold mb-4">{featuredCampaign.title}</h2>
-                <p className="text-zinc-400 mb-6">{featuredCampaign.description}</p>
+                <h2 className="text-4xl md:text-5xl font-bold mb-4">{featuredCampaign.titulo}</h2>
+                <p className="text-zinc-400 mb-6">{featuredCampaign.descricao}</p>
                 <div className="flex items-center gap-6 mb-6 text-zinc-300">
                   <div className="flex items-center gap-2">
                     <Calendar className="w-5 h-5 text-green-500" />
-                    <span>{formatDate(featuredCampaign.drawDate)}</span>
+                    <span>{formatDate(featuredCampaign.dataHoraSorteio)}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Clock className="w-5 h-5 text-green-500" />
-                    <span>{featuredCampaign.drawTime}</span>
+                    <span>{new Date(featuredCampaign.dataHoraSorteio).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
                   </div>
                 </div>
                 <div className="mb-6">
                   <p className="text-sm text-zinc-500 mb-2">Cota por apenas:</p>
-                  <p className="text-3xl font-bold text-green-500">{formatCurrency(featuredCampaign.pricePerTicket)}</p>
+                  <p className="text-3xl font-bold text-green-500">{formatCurrency(featuredCampaign.valorCota)}</p>
                 </div>
                 <Button
                   onClick={() => navigate(`/campanha/${featuredCampaign.id}`)}
@@ -79,6 +132,16 @@ export const Home: React.FC = () => {
                   Ver campanha
                   <ChevronRight className="ml-2" />
                 </Button>
+                {isAdmin && (
+                  <Button
+                    onClick={() => navigate(`/campanhas/editar/${featuredCampaign.id}`)}
+                    variant="outline"
+                    className="border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-black font-bold text-lg py-6 mt-4"
+                  >
+                    <Edit className="mr-2 w-5 h-5" />
+                    Editar Campanha
+                  </Button>
+                )}
                 <p className="text-xs text-zinc-500 mt-4">
                   * Os números são gerados automaticamente entre 0000 e 9999
                 </p>
@@ -86,7 +149,7 @@ export const Home: React.FC = () => {
             </div>
           </Card>
         </section>
-      )}
+      ) : null}
 
       {/* Secondary Campaigns */}
       <section id="campanhas" className="container mx-auto px-4 py-12">
@@ -96,31 +159,44 @@ export const Home: React.FC = () => {
             <Card key={campaign.id} className="bg-zinc-900 border-zinc-800 overflow-hidden hover:border-green-500 transition cursor-pointer" onClick={() => navigate(`/campanha/${campaign.id}`)}>
               <div className="relative h-48">
                 <img
-                  src={campaign.imageUrl}
-                  alt={campaign.title}
+                  src={campaign.imagem}
+                  alt={campaign.titulo}
                   className="w-full h-full object-cover"
                 />
               </div>
               <div className="p-6">
-                <h3 className="text-xl font-bold mb-2">{campaign.title}</h3>
+                <h3 className="text-xl font-bold mb-2">{campaign.titulo}</h3>
                 <div className="flex items-center gap-4 text-sm text-zinc-400 mb-4">
                   <div className="flex items-center gap-1">
                     <Calendar className="w-4 h-4" />
-                    <span>{formatDate(campaign.drawDate)}</span>
+                    <span>{formatDate(campaign.dataHoraSorteio)}</span>
                   </div>
                   <div className="flex items-center gap-1">
                     <Clock className="w-4 h-4" />
-                    <span>{campaign.drawTime}</span>
+                    <span>{new Date(campaign.dataHoraSorteio).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
                   </div>
                 </div>
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-xs text-zinc-500">Por cota</p>
-                    <p className="text-2xl font-bold text-green-500">{formatCurrency(campaign.pricePerTicket)}</p>
+                    <p className="text-2xl font-bold text-green-500">{formatCurrency(campaign.valorCota)}</p>
                   </div>
-                  <Button className="bg-green-500 hover:bg-green-600 text-black">
-                    Ver
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button className="bg-green-500 hover:bg-green-600 text-black">
+                      Ver
+                    </Button>
+                    {isAdmin && (
+                      <Button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/campanhas/editar/${campaign.id}`);
+                        }}
+                        className="bg-blue-500 hover:bg-blue-600 text-black"
+                      >
+                        <Edit className="w-4 h-4" />
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </div>
             </Card>

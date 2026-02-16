@@ -45,7 +45,7 @@ export const Register: React.FC = () => {
 
       console.log('REGISTER STATUS:', resp.status);
       
-      let data = {};
+      let data: any = {};
       const contentType = resp.headers.get('content-type');
       if (contentType && contentType.includes('application/json')) {
         data = await resp.json();

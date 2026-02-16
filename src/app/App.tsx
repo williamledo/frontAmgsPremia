@@ -7,6 +7,7 @@ import { Login } from '@/pages/Login';
 import { Register } from '@/pages/Register';
 import { Home } from '@/pages/Home';
 import { CampaignDetail } from '@/pages/CampaignDetail';
+import { CampaignEdit } from '@/pages/CampaignEdit';
 import { ChooseQuantity } from '@/pages/ChooseQuantity';
 import { Checkout } from '@/pages/Checkout';
 import { ProcessingPayment } from '@/pages/ProcessingPayment';
@@ -14,6 +15,7 @@ import { Result } from '@/pages/Result';
 import { MyAccount } from '@/pages/MyAccount';
 
 import { ProtectedRoute } from '@/app/routes/ProtectedRoute';
+import { AdminRoute } from '@/app/routes/AdminRoute';
 
 export default function App() {
   useEffect(() => {
@@ -45,6 +47,15 @@ export default function App() {
                 <ProtectedRoute>
                   <CampaignDetail />
                 </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/campanhas/editar/:id"
+              element={
+                <AdminRoute>
+                  <CampaignEdit />
+                </AdminRoute>
               }
             />
 
