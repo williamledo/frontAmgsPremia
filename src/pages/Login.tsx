@@ -4,63 +4,67 @@ import { Button } from '@/app/components/ui/button';
 import { Card } from '@/app/components/ui/card';
 import { Input } from '@/app/components/ui/input';
 import { Label } from '@/app/components/ui/label';
-import { Mail, Lock, ChevronRight } from 'lucide-react';
+import { Mail, Lock, ChevronRight, AlertCircle } from 'lucide-react';
 
 export const Login: React.FC = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const handleLogin = async (e: React.FormEvent) => {
-  e.preventDefault();
-  setIsLoading(true);
+    e.preventDefault();
+    setIsLoading(true);
+    setError(''); // limpar erro anterior
 
-  try {
-    const resp = await fetch('http://localhost:8080/api/login', {
-      method: 'POST',
-      credentials: 'include', // mantém cookie de sessão JSESSIONID
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: new URLSearchParams({
-        email: email,     // Spring espera "username"
-        password: password,  // Spring espera "password"
-      }),
-    });
+    try {
+      const resp = await fetch('http://localhost:8080/api/login', {
+        method: 'POST',
+        credentials: 'include', // mantém cookie de sessão JSESSIONID
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+          email: email,
+          password: password,
+        }),
+      });
 
-    // 🔎 logs de diagnóstico
-    console.log('LOGIN STATUS:', resp.status);
+      console.log('LOGIN STATUS:', resp.status);
+      const text = await resp.text();
+      console.log('LOGIN RESPONSE:', text);
 
-    const text = await resp.text();
-    console.log('LOGIN RESPONSE:', text);
+      if (resp.status === 200) {
+        // login OK
+        navigate('/campanhas');
+        return;
+      }
 
-    if (resp.status === 200) {
-      // login OK
-      navigate('/campanhas');
-      return;
+      if (resp.status === 401) {
+        setError('Email ou senha inválidos. Por favor, verifique seus dados e tente novamente.');
+        setPassword(''); // limpar senha após erro
+        return;
+      }
+
+      if (resp.status === 403) {
+        setError('Acesso bloqueado. Verifique sua conta ou contate o suporte.');
+        setPassword('');
+        return;
+      }
+
+      // qualquer outro status inesperado
+      setError(`Erro ao conectar (${resp.status}). Tente novamente em alguns momentos.`);
+      setPassword('');
+
+    } catch (err) {
+      console.error('Erro de rede/login:', err);
+      setError('Erro de conexão com o servidor. Verifique sua internet e tente novamente.');
+      setPassword(''); // limpar senha após erro
+    } finally {
+      setIsLoading(false);
     }
-
-    if (resp.status === 401) {
-      alert('Email ou senha inválidos');
-      return;
-    }
-
-    if (resp.status === 403) {
-      alert('Acesso bloqueado (403). Verifique CORS ou sessão.');
-      return;
-    }
-
-    // qualquer outro status inesperado
-    alert(`Erro no login (${resp.status})`);
-
-  } catch (err) {
-    console.error('Erro de rede/login:', err);
-    alert('Erro de conexão com o servidor');
-  } finally {
-    setIsLoading(false);
-  }
-};
+  };
 
 
 
@@ -81,6 +85,13 @@ export const Login: React.FC = () => {
               <h2 className="text-3xl font-bold mb-2">Bem-vindo!</h2>
               <p className="text-zinc-400">Faça login para continuar participando dos sorteios</p>
             </div>
+
+            {error && (
+              <div className="mb-6 p-4 bg-red-900/20 border border-red-700 rounded-lg flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+                <p className="text-red-300 text-sm">{error}</p>
+              </div>
+            )}
 
             <form onSubmit={handleLogin} className="space-y-6">
               <div className="space-y-2">
@@ -109,7 +120,9 @@ export const Login: React.FC = () => {
                     placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500 pl-10 py-2 h-auto"
+                    className={`bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500 pl-10 py-2 h-auto ${
+                      error ? 'border-red-600' : 'border-zinc-700'
+                    }`}
                     required
                   />
                 </div>
