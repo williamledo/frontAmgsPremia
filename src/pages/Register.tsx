@@ -4,7 +4,7 @@ import { Button } from '@/app/components/ui/button';
 import { Card } from '@/app/components/ui/card';
 import { Input } from '@/app/components/ui/input';
 import { Label } from '@/app/components/ui/label';
-import { Mail, Lock, User, ChevronRight, Fingerprint } from 'lucide-react';
+import { Mail, Lock, User, ChevronRight, Fingerprint, AlertCircle, CheckCircle } from 'lucide-react';
 
 export const Register: React.FC = () => {
   const navigate = useNavigate();
@@ -14,22 +14,62 @@ export const Register: React.FC = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
+    setSuccess('');
     
     if (password !== confirmPassword) {
-      alert('As senhas não coincidem!');
+      setError('As senhas não coincidem!');
       return;
     }
 
     setIsLoading(true);
     
-    // Simula uma requisição de registro
-    setTimeout(() => {
+    try {
+      const resp = await fetch('http://localhost:8080/api/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          nome: name,
+          cpf: cpf,
+          email: email,
+          senha: password,
+        }),
+      });
+
+      console.log('REGISTER STATUS:', resp.status);
+      
+      let data = {};
+      const contentType = resp.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        data = await resp.json();
+      }
+      console.log('REGISTER RESPONSE:', data);
+
+      if (resp.status === 201 || resp.status === 200) {
+        setSuccess('Conta criada com sucesso! Redirecionando para login...');
+        setTimeout(() => navigate('/'), 2000);
+        return;
+      }
+
+      if (resp.status === 400) {
+        setError(data.erro || 'Erro ao criar conta');
+        return;
+      }
+
+      setError(data.erro || `Erro ao criar conta (${resp.status})`);
+    } catch (err) {
+      console.error('Erro de registro:', err);
+      setError('Erro de conexão com o servidor');
+    } finally {
       setIsLoading(false);
-      navigate('/campanhas');
-    }, 1500);
+    }
   };
 
   return (
@@ -42,6 +82,20 @@ export const Register: React.FC = () => {
               <h2 className="text-3xl font-bold mb-2">Criar Conta</h2>
               <p className="text-zinc-400">Junte-se a nós e comece a participar de sorteios</p>
             </div>
+
+            {error && (
+              <div className="mb-6 p-4 bg-red-900/20 border border-red-700 rounded-lg flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+                <p className="text-red-300 text-sm">{error}</p>
+              </div>
+            )}
+
+            {success && (
+              <div className="mb-6 p-4 bg-green-900/20 border border-green-700 rounded-lg flex items-start gap-3">
+                <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+                <p className="text-green-300 text-sm">{success}</p>
+              </div>
+            )}
 
             <form onSubmit={handleRegister} className="space-y-6">
               <div className="space-y-2">
