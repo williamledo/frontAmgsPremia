@@ -1,1 +1,3 @@
-export const APP_NAME = import.meta.env.VITE_APP_NAME || 'amigospremia';
+import { getConfig } from '@/config/runtime';
+
+export const APP_NAME = getConfig('VITE_APP_NAME') || 'amigospremia';
