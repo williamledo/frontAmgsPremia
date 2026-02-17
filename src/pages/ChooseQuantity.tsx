@@ -1,25 +1,66 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { campaigns } from '@/data/mockData';
 import { formatCurrency } from '@/utils/numbers';
+import { resolveImageUrl, resolveImageFallbackUrls } from '@/utils/image';
 import { ChevronLeft, Ticket, Info } from 'lucide-react';
 import { Button } from '@/app/components/ui/button';
 import { Card } from '@/app/components/ui/card';
 import { Input } from '@/app/components/ui/input';
 import { usePurchase } from '@/context/PurchaseContext';
+import { ImageWithFallback } from '@/app/components/figma/ImageWithFallback';
 
 const quickOptions = [1, 5, 10, 25, 50, 100];
+
+interface Campaign {
+  id: number;
+  titulo: string;
+  imagem: string;
+  valorCota: number;
+}
 
 export const ChooseQuantity: React.FC = () => {
   const navigate = useNavigate();
   const { currentCampaignId, setQuantity } = usePurchase();
   const [selectedQuantity, setSelectedQuantity] = useState<number>(0);
   const [customQuantity, setCustomQuantity] = useState<string>('');
+  const [campaign, setCampaign] = useState<Campaign | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const campaign = campaigns.find(c => c.id === currentCampaignId);
+  useEffect(() => {
+    const loadCampaign = async () => {
+      if (!currentCampaignId) {
+        navigate('/campanhas');
+        return;
+      }
+
+      try {
+        const res = await fetch(`http://localhost:8080/api/campanhas/${currentCampaignId}`, {
+          credentials: 'include',
+        });
+
+        if (!res.ok) {
+          navigate('/campanhas');
+          return;
+        }
+
+        const data = await res.json();
+        setCampaign(data);
+      } catch (err) {
+        console.error('Erro ao carregar campanha:', err);
+        navigate('/campanhas');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadCampaign();
+  }, [currentCampaignId, navigate]);
+
+  if (isLoading) {
+    return <div className="min-h-screen bg-zinc-950 text-white flex items-center justify-center">Carregando...</div>;
+  }
 
   if (!campaign) {
-    navigate('/campanhas');
     return null;
   }
 
@@ -41,7 +82,7 @@ export const ChooseQuantity: React.FC = () => {
     }
   };
 
-  const total = selectedQuantity * campaign.pricePerTicket;
+  const total = selectedQuantity * campaign.valorCota;
 
   return (
     <div className="min-h-screen bg-zinc-950 text-white">
@@ -67,14 +108,15 @@ export const ChooseQuantity: React.FC = () => {
         {/* Campaign Info */}
         <Card className="bg-zinc-900 border-zinc-800 p-6 mb-8">
           <div className="flex items-center gap-4">
-            <img
-              src={campaign.imageUrl}
-              alt={campaign.title}
+            <ImageWithFallback
+              src={resolveImageUrl(campaign.imagem)}
+              fallbackSrcs={resolveImageFallbackUrls(campaign.imagem)}
+              alt={campaign.titulo}
               className="w-24 h-24 object-cover rounded-lg"
             />
             <div>
-              <h2 className="text-2xl font-bold mb-1">{campaign.title}</h2>
-              <p className="text-zinc-400">Cota por {formatCurrency(campaign.pricePerTicket)}</p>
+              <h2 className="text-2xl font-bold mb-1">{campaign.titulo}</h2>
+              <p className="text-zinc-400">Cota por {formatCurrency(campaign.valorCota)}</p>
             </div>
           </div>
         </Card>
@@ -90,7 +132,7 @@ export const ChooseQuantity: React.FC = () => {
           <div>
             <p className="text-sm text-zinc-500 mb-4">Opções rápidas:</p>
             <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
-              {quickOptions.map(qty => (
+              {quickOptions.map((qty) => (
                 <Button
                   key={qty}
                   onClick={() => handleQuickSelect(qty)}
@@ -144,7 +186,7 @@ export const ChooseQuantity: React.FC = () => {
 
                 <div className="border-t border-zinc-800 pt-6">
                   <div className="flex justify-between items-center mb-2">
-                    <span className="text-zinc-400">{selectedQuantity} cotas × {formatCurrency(campaign.pricePerTicket)}</span>
+                    <span className="text-zinc-400">{selectedQuantity} cotas x {formatCurrency(campaign.valorCota)}</span>
                     <span className="text-xl font-bold">{formatCurrency(total)}</span>
                   </div>
                   <div className="flex justify-between items-center">

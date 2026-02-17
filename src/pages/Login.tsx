@@ -75,7 +75,7 @@ export const Login: React.FC = () => {
         <div className="mb-8">
               <img 
                 src={new URL('../utils/logo-horizontal.jpeg', import.meta.url).href}
-                alt="Amigos Premia Logo" 
+                alt="Amigos Premia Logo"
                 className="h-56 object-contain"
               />
         </div>

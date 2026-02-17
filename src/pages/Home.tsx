@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { winners } from '@/data/mockData';
 import { formatCurrency, formatDate } from '@/utils/numbers';
+import { resolveImageUrl, resolveImageFallbackUrls } from '@/utils/image';
+import { ImageWithFallback } from '@/app/components/figma/ImageWithFallback';
 import { Trophy, Calendar, Clock, ChevronRight, Edit } from 'lucide-react';
 import { Button } from '@/app/components/ui/button';
 import { Badge } from '@/app/components/ui/badge';
@@ -94,8 +96,9 @@ export const Home: React.FC = () => {
           <Card className="bg-zinc-900 border-zinc-800 overflow-hidden">
             <div className="grid md:grid-cols-2 gap-8">
               <div className="relative h-64 md:h-full">
-                <img
-                  src={featuredCampaign.imagem}
+                <ImageWithFallback
+                  src={resolveImageUrl(featuredCampaign.imagem)}
+                  fallbackSrcs={resolveImageFallbackUrls(featuredCampaign.imagem)}
                   alt={featuredCampaign.titulo}
                   className="w-full h-full object-cover"
                 />
@@ -158,8 +161,9 @@ export const Home: React.FC = () => {
           {secondaryCampaigns.map(campaign => (
             <Card key={campaign.id} className="bg-zinc-900 border-zinc-800 overflow-hidden hover:border-green-500 transition cursor-pointer" onClick={() => navigate(`/campanha/${campaign.id}`)}>
               <div className="relative h-48">
-                <img
-                  src={campaign.imagem}
+                <ImageWithFallback
+                  src={resolveImageUrl(campaign.imagem)}
+                  fallbackSrcs={resolveImageFallbackUrls(campaign.imagem)}
                   alt={campaign.titulo}
                   className="w-full h-full object-cover"
                 />

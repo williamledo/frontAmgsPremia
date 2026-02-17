@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { useEffect } from 'react';
 import { PurchaseProvider } from '@/context/PurchaseContext';
 import { Toaster } from '@/app/components/ui/sonner';
+import { APP_NAME } from '@/config/app';
 
 import { Login } from '@/pages/Login';
 import { Register } from '@/pages/Register';
@@ -19,7 +20,7 @@ import { AdminRoute } from '@/app/routes/AdminRoute';
 
 export default function App() {
   useEffect(() => {
-    document.title = 'Amigos Premia';
+    document.title = APP_NAME;
   }, []);
 
   return (

@@ -4,6 +4,8 @@ import { Button } from '@/app/components/ui/button';
 import { Card } from '@/app/components/ui/card';
 import { Input } from '@/app/components/ui/input';
 import { Label } from '@/app/components/ui/label';
+import { resolveImageUrl, resolveImageFallbackUrls } from '@/utils/image';
+import { ImageWithFallback } from '@/app/components/figma/ImageWithFallback';
 import { ArrowLeft, CheckCircle, AlertCircle } from 'lucide-react';
 
 interface Campaign {
@@ -188,8 +190,9 @@ export const CampaignEdit: React.FC = () => {
                   required
                 />
                 {formData.imagem && (
-                  <img
-                    src={formData.imagem}
+                  <ImageWithFallback
+                    src={resolveImageUrl(formData.imagem)}
+                    fallbackSrcs={resolveImageFallbackUrls(formData.imagem)}
                     alt="Preview"
                     className="mt-4 w-32 h-32 object-cover rounded-lg"
                   />

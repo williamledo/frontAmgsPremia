@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { campaigns } from '@/data/mockData';
 import { formatCurrency } from '@/utils/numbers';
 import { ChevronLeft, Copy, Clock, CheckCircle } from 'lucide-react';
 import { Button } from '@/app/components/ui/button';
@@ -9,16 +8,55 @@ import { Input } from '@/app/components/ui/input';
 import { Label } from '@/app/components/ui/label';
 import { usePurchase } from '@/context/PurchaseContext';
 import { toast } from 'sonner';
+import { resolveImageUrl, resolveImageFallbackUrls } from '@/utils/image';
+import { ImageWithFallback } from '@/app/components/figma/ImageWithFallback';
+
+interface Campaign {
+  id: number;
+  titulo: string;
+  imagem: string;
+  valorCota: number;
+}
 
 export const Checkout: React.FC = () => {
   const navigate = useNavigate();
   const { currentCampaignId, quantity } = usePurchase();
+  const [campaign, setCampaign] = useState<Campaign | null>(null);
+  const [isLoadingCampaign, setIsLoadingCampaign] = useState(true);
   const [name, setName] = useState('');
   const [cpf, setCpf] = useState('');
   const [email, setEmail] = useState('');
   const [timeLeft, setTimeLeft] = useState(15 * 60); // 15 minutes in seconds
 
-  const campaign = campaigns.find(c => c.id === currentCampaignId);
+  useEffect(() => {
+    const loadCampaign = async () => {
+      if (!currentCampaignId) {
+        navigate('/campanhas');
+        return;
+      }
+
+      try {
+        const res = await fetch(`http://localhost:8080/api/campanhas/${currentCampaignId}`, {
+          credentials: 'include',
+        });
+
+        if (!res.ok) {
+          navigate('/campanhas');
+          return;
+        }
+
+        const data = await res.json();
+        setCampaign(data);
+      } catch (err) {
+        console.error('Erro ao carregar campanha:', err);
+        navigate('/campanhas');
+      } finally {
+        setIsLoadingCampaign(false);
+      }
+    };
+
+    loadCampaign();
+  }, [currentCampaignId, navigate]);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -28,12 +66,16 @@ export const Checkout: React.FC = () => {
     return () => clearInterval(timer);
   }, []);
 
+  if (isLoadingCampaign) {
+    return <div className="min-h-screen bg-zinc-950 text-white flex items-center justify-center">Carregando...</div>;
+  }
+
   if (!campaign || quantity === 0) {
     navigate('/campanhas');
     return null;
   }
 
-  const total = quantity * campaign.pricePerTicket;
+  const total = quantity * campaign.valorCota;
   const pixCode = `00020126580014BR.GOV.BCB.PIX0136${Math.random().toString(36).substring(2)}520400005303986540${total.toFixed(2)}5802BR5913SORTIOMAX6009SAO PAULO62070503***6304${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
 
   const formatTime = (seconds: number) => {
@@ -81,6 +123,22 @@ export const Checkout: React.FC = () => {
           {/* User Data Form */}
           <div>
             <Card className="bg-zinc-900 border-zinc-800 p-6 mb-6">
+              <div className="flex items-center gap-4">
+                <ImageWithFallback
+                  src={resolveImageUrl(campaign.imagem)}
+                  fallbackSrcs={resolveImageFallbackUrls(campaign.imagem)}
+                  alt={campaign.titulo}
+                  className="w-20 h-20 object-cover rounded-lg"
+                />
+                <div>
+                  <p className="text-zinc-400 text-sm">Campanha</p>
+                  <h2 className="text-xl font-bold">{campaign.titulo}</h2>
+                  <p className="text-zinc-400 text-sm">Cota por {formatCurrency(campaign.valorCota)}</p>
+                </div>
+              </div>
+            </Card>
+
+            <Card className="bg-zinc-900 border-zinc-800 p-6 mb-6">
               <h2 className="text-xl font-bold mb-6">Seus Dados</h2>
               <div className="space-y-4">
                 <div>
@@ -125,7 +183,7 @@ export const Checkout: React.FC = () => {
               <div className="space-y-3">
                 <div className="flex justify-between text-sm">
                   <span className="text-zinc-400">Campanha</span>
-                  <span className="font-medium text-right max-w-[200px]">{campaign.title}</span>
+                  <span className="font-medium text-right max-w-[200px]">{campaign.titulo}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-zinc-400">Quantidade de cotas</span>
@@ -133,7 +191,7 @@ export const Checkout: React.FC = () => {
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-zinc-400">Valor por cota</span>
-                  <span className="font-medium">{formatCurrency(campaign.pricePerTicket)}</span>
+                  <span className="font-medium">{formatCurrency(campaign.valorCota)}</span>
                 </div>
                 <div className="border-t border-zinc-800 pt-3 mt-3">
                   <div className="flex justify-between">

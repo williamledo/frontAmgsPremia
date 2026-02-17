@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { campaigns } from '@/data/mockData';
 import { formatCurrency, formatDate } from '@/utils/numbers';
+import { resolveImageUrl, resolveImageFallbackUrls } from '@/utils/image';
+import { ImageWithFallback } from '@/app/components/figma/ImageWithFallback';
 import { Calendar, Clock, ChevronLeft, Shield, CheckCircle } from 'lucide-react';
 import { Button } from '@/app/components/ui/button';
 import { Badge } from '@/app/components/ui/badge';
@@ -9,18 +10,61 @@ import { Card } from '@/app/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/app/components/ui/accordion';
 import { usePurchase } from '@/context/PurchaseContext';
 
+interface Campaign {
+  id: number;
+  titulo: string;
+  descricao: string;
+  imagem: string;
+  dataHoraSorteio: string;
+  valorCota: number;
+}
+
 export const CampaignDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { setCurrentCampaignId } = usePurchase();
-  const campaign = campaigns.find(c => c.id === id);
+  const [campaign, setCampaign] = useState<Campaign | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchCampaign = async () => {
+      if (!id) {
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        const resp = await fetch(`http://localhost:8080/api/campanhas/${id}`, {
+          credentials: 'include',
+        });
+
+        if (resp.ok) {
+          const data = await resp.json();
+          setCampaign(data);
+        } else {
+          setCampaign(null);
+        }
+      } catch (err) {
+        console.error('Erro ao carregar campanha:', err);
+        setCampaign(null);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchCampaign();
+  }, [id]);
+
+  if (isLoading) {
+    return <div className="min-h-screen bg-zinc-950 text-white flex items-center justify-center">Carregando...</div>;
+  }
 
   if (!campaign) {
     return <div className="min-h-screen bg-zinc-950 text-white flex items-center justify-center">Campanha não encontrada</div>;
   }
 
   const handleBuyClick = () => {
-    setCurrentCampaignId(campaign.id);
+    setCurrentCampaignId(String(campaign.id));
     navigate('/escolher-cotas');
   };
 
@@ -50,9 +94,10 @@ export const CampaignDetail: React.FC = () => {
           <div className="lg:col-span-2">
             {/* Image Gallery */}
             <div className="mb-8">
-              <img
-                src={campaign.imageUrl}
-                alt={campaign.title}
+              <ImageWithFallback
+                src={resolveImageUrl(campaign.imagem)}
+                fallbackSrcs={resolveImageFallbackUrls(campaign.imagem)}
+                alt={campaign.titulo}
                 className="w-full h-96 object-cover rounded-lg"
               />
             </div>
@@ -67,8 +112,8 @@ export const CampaignDetail: React.FC = () => {
                   Sorteio ao vivo
                 </Badge>
               </div>
-              <h1 className="text-4xl font-bold mb-4">{campaign.title}</h1>
-              <p className="text-zinc-300 text-lg">{campaign.description}</p>
+              <h1 className="text-4xl font-bold mb-4">{campaign.titulo}</h1>
+              <p className="text-zinc-300 text-lg">{campaign.descricao}</p>
             </div>
 
             {/* How it Works */}
@@ -169,7 +214,7 @@ export const CampaignDetail: React.FC = () => {
             <Card className="bg-zinc-900 border-zinc-800 p-6 sticky top-24">
               <div className="mb-6">
                 <p className="text-sm text-zinc-500 mb-2">Preço por cota</p>
-                <p className="text-3xl font-bold text-green-500">{formatCurrency(campaign.pricePerTicket)}</p>
+                <p className="text-3xl font-bold text-green-500">{formatCurrency(campaign.valorCota)}</p>
               </div>
 
               <div className="mb-6 space-y-3">
@@ -178,14 +223,19 @@ export const CampaignDetail: React.FC = () => {
                     <Calendar className="w-5 h-5 text-green-500" />
                     <span>Data do sorteio</span>
                   </div>
-                  <span className="font-bold">{formatDate(campaign.drawDate)}</span>
+                  <span className="font-bold">{formatDate(campaign.dataHoraSorteio)}</span>
                 </div>
                 <div className="flex items-center justify-between p-3 bg-zinc-800 rounded-lg">
                   <div className="flex items-center gap-2 text-zinc-300">
                     <Clock className="w-5 h-5 text-green-500" />
                     <span>Horário</span>
                   </div>
-                  <span className="font-bold">{campaign.drawTime}</span>
+                  <span className="font-bold">
+                    {new Date(campaign.dataHoraSorteio).toLocaleTimeString('pt-BR', {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between p-3 bg-zinc-800 rounded-lg">
                   <div className="flex items-center gap-2 text-zinc-300">
