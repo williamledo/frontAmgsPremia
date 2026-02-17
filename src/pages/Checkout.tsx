@@ -10,6 +10,7 @@ import { usePurchase } from '@/context/PurchaseContext';
 import { toast } from 'sonner';
 import { resolveImageUrl, resolveImageFallbackUrls } from '@/utils/image';
 import { ImageWithFallback } from '@/app/components/figma/ImageWithFallback';
+import { apiUrl } from '@/config/api';
 
 interface Campaign {
   id: number;
@@ -36,7 +37,7 @@ export const Checkout: React.FC = () => {
       }
 
       try {
-        const res = await fetch(`http://localhost:8080/api/campanhas/${currentCampaignId}`, {
+        const res = await fetch(apiUrl(`/api/campanhas/${currentCampaignId}`), {
           credentials: 'include',
         });
 

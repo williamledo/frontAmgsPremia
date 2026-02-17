@@ -1,3 +1,5 @@
+import { apiUrl } from '@/config/api';
+
 const extractDriveFileId = (url: string): string | null => {
   const driveFileMatch = url.match(/drive\.google\.com\/file\/d\/([^/?]+)/i);
   const driveIdParamMatch = url.match(/[?&]id=([^&]+)/i);
@@ -17,7 +19,7 @@ export const resolveImageFallbackUrls = (url: string): string[] => {
 
   const id = encodeURIComponent(fileId);
   const proxy = (target: string) =>
-    `http://localhost:8080/api/campanhas/imagem-proxy?url=${encodeURIComponent(target)}`;
+    apiUrl(`/api/campanhas/imagem-proxy?url=${encodeURIComponent(target)}`);
 
   const directUrls = [
     `https://lh3.googleusercontent.com/d/${id}=w2000`,

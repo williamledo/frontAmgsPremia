@@ -5,6 +5,7 @@ import { Card } from '@/app/components/ui/card';
 import { Input } from '@/app/components/ui/input';
 import { Label } from '@/app/components/ui/label';
 import { Mail, Lock, ChevronRight, AlertCircle } from 'lucide-react';
+import { apiUrl } from '@/config/api';
 
 export const Login: React.FC = () => {
   const navigate = useNavigate();
@@ -19,7 +20,7 @@ export const Login: React.FC = () => {
     setError(''); // limpar erro anterior
 
     try {
-      const resp = await fetch('http://localhost:8080/api/login', {
+      const resp = await fetch(apiUrl('/api/login'), {
         method: 'POST',
         credentials: 'include', // mantém cookie de sessão JSESSIONID
         headers: {

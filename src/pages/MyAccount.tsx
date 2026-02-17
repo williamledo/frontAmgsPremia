@@ -8,6 +8,7 @@ import { Card } from '@/app/components/ui/card';
 import { Badge } from '@/app/components/ui/badge';
 import { usePurchase } from '@/context/PurchaseContext';
 import { toast } from 'sonner';
+import { apiUrl } from '@/config/api';
 
 export const MyAccount: React.FC = () => {
   const navigate = useNavigate();
@@ -20,7 +21,7 @@ export const MyAccount: React.FC = () => {
 
   const handleLogout = async () => {
   try {
-    await fetch('http://localhost:8080/api/logout', {
+    await fetch(apiUrl('/api/logout'), {
       method: 'POST',
       credentials: 'include'
     });

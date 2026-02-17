@@ -9,6 +9,7 @@ import { Badge } from '@/app/components/ui/badge';
 import { Card } from '@/app/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/app/components/ui/accordion';
 import { usePurchase } from '@/context/PurchaseContext';
+import { apiUrl } from '@/config/api';
 
 interface Campaign {
   id: number;
@@ -34,7 +35,7 @@ export const CampaignDetail: React.FC = () => {
       }
 
       try {
-        const resp = await fetch(`http://localhost:8080/api/campanhas/${id}`, {
+        const resp = await fetch(apiUrl(`/api/campanhas/${id}`), {
           credentials: 'include',
         });
 

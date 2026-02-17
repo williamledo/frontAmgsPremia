@@ -6,6 +6,7 @@ import { Input } from '@/app/components/ui/input';
 import { Label } from '@/app/components/ui/label';
 import { resolveImageUrl, resolveImageFallbackUrls } from '@/utils/image';
 import { ImageWithFallback } from '@/app/components/figma/ImageWithFallback';
+import { apiUrl } from '@/config/api';
 import { ArrowLeft, CheckCircle, AlertCircle } from 'lucide-react';
 
 interface Campaign {
@@ -40,7 +41,7 @@ export const CampaignEdit: React.FC = () => {
       setIsLoading(true);
       setError('');
       try {
-        const resp = await fetch(`http://localhost:8080/api/campanhas/${id}`, {
+        const resp = await fetch(apiUrl(`/api/campanhas/${id}`), {
           credentials: 'include',
         });
         if (!resp.ok) {
@@ -90,7 +91,7 @@ export const CampaignEdit: React.FC = () => {
         dataHoraSorteio: new Date(formData.dataHoraSorteio).toISOString(),
       };
 
-      const resp = await fetch(`http://localhost:8080/api/campanhas/${id}`, {
+      const resp = await fetch(apiUrl(`/api/campanhas/${id}`), {
         method: 'PUT',
         credentials: 'include',
         headers: {

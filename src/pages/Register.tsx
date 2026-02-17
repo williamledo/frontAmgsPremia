@@ -5,6 +5,7 @@ import { Card } from '@/app/components/ui/card';
 import { Input } from '@/app/components/ui/input';
 import { Label } from '@/app/components/ui/label';
 import { Mail, Lock, User, ChevronRight, Fingerprint, AlertCircle, CheckCircle } from 'lucide-react';
+import { apiUrl } from '@/config/api';
 
 export const Register: React.FC = () => {
   const navigate = useNavigate();
@@ -30,7 +31,7 @@ export const Register: React.FC = () => {
     setIsLoading(true);
     
     try {
-      const resp = await fetch('http://localhost:8080/api/register', {
+      const resp = await fetch(apiUrl('/api/register'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -4,6 +4,7 @@ import { winners } from '@/data/mockData';
 import { formatCurrency, formatDate } from '@/utils/numbers';
 import { resolveImageUrl, resolveImageFallbackUrls } from '@/utils/image';
 import { ImageWithFallback } from '@/app/components/figma/ImageWithFallback';
+import { apiUrl } from '@/config/api';
 import { Trophy, Calendar, Clock, ChevronRight, Edit } from 'lucide-react';
 import { Button } from '@/app/components/ui/button';
 import { Badge } from '@/app/components/ui/badge';
@@ -28,7 +29,7 @@ export const Home: React.FC = () => {
   useEffect(() => {
     const loadCampaigns = async () => {
       try {
-        const res = await fetch('http://localhost:8080/api/campanhas', { 
+        const res = await fetch(apiUrl('/api/campanhas'), { 
           credentials: 'include' 
         });
         if (res.ok) {
@@ -48,7 +49,7 @@ export const Home: React.FC = () => {
   useEffect(() => {
     const checkAdmin = async () => {
       try {
-        const res = await fetch('http://localhost:8080/api/me', { credentials: 'include' });
+        const res = await fetch(apiUrl('/api/me'), { credentials: 'include' });
         if (res.ok) {
           const data = await res.json();
           setIsAdmin(data.role === 'ADMIN');

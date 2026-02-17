@@ -1,5 +1,6 @@
 import { Navigate } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { apiUrl } from "@/config/api";
 
 type Props = {
   children: React.ReactNode;
@@ -37,8 +38,8 @@ export function ProtectedRoute({ children }: Props) {
       // try relative path first
       let result = await tryFetch('/api/me');
       if (result === null) {
-        // fallback to localhost backend
-        result = await tryFetch('http://localhost:8080/api/me');
+        // fallback to configured backend base URL
+        result = await tryFetch(apiUrl('/api/me'));
       }
 
       if (!mounted) return;

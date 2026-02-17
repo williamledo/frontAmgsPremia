@@ -8,6 +8,7 @@ import { Card } from '@/app/components/ui/card';
 import { Input } from '@/app/components/ui/input';
 import { usePurchase } from '@/context/PurchaseContext';
 import { ImageWithFallback } from '@/app/components/figma/ImageWithFallback';
+import { apiUrl } from '@/config/api';
 
 const quickOptions = [1, 5, 10, 25, 50, 100];
 
@@ -34,7 +35,7 @@ export const ChooseQuantity: React.FC = () => {
       }
 
       try {
-        const res = await fetch(`http://localhost:8080/api/campanhas/${currentCampaignId}`, {
+        const res = await fetch(apiUrl(`/api/campanhas/${currentCampaignId}`), {
           credentials: 'include',
         });
 
